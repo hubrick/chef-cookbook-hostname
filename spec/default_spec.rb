@@ -4,7 +4,7 @@ require 'spec_helper'
 describe 'hostname::default' do
   context 'wtih set_fqdn as full FQDN' do
     let(:chef_run) do
-      ChefSpec::SoloRunner.new(platform: 'ubuntu', version: '16.04') do |node|
+      ChefSpec::SoloRunner.new(platform: 'ubuntu', version: '14.04') do |node|
         node.normal['set_fqdn'] = 'test.example.com'
       end.converge described_recipe
     end
@@ -42,7 +42,7 @@ describe 'hostname::default' do
 
   context 'wtih set_fqdn as wildcard FQDN' do
     let(:chef_run) do
-      ChefSpec::SoloRunner.new(platform: 'ubuntu', version: '16.04') do |node|
+      ChefSpec::SoloRunner.new(platform: 'ubuntu', version: '14.04') do |node|
         node.normal['set_fqdn'] = '*.example.com'
       end.converge described_recipe
     end
@@ -78,51 +78,51 @@ describe 'hostname::default' do
     end
   end
 
-  it 'appends hostname hostfile entry when append_hostsfile_ip is true' do
-    chef_run.node.set['set_fqdn'] = 'test.example.com'
-    chef_run.node.set['hostname_cookbook']['append_hostsfile_ip'] = true
-    chef_run.converge 'hostname'
+  context 'wtih set_fqdn as full FQDN and append_hostsfile_ip is false' do
+    let(:chef_run) do
+      ChefSpec::SoloRunner.new(platform: 'ubuntu', version: '14.04') do |node|
+        node.normal['set_fqdn'] = 'test.example.com'
+        node.normal['hostname_cookbook']['append_hostsfile_ip'] = false
+      end.converge described_recipe
+    end
 
-    expect(chef_run).to create_hostsfile_entry('set hostname')
+    it 'does not append hostname hostfile entry when append_hostsfile_ip is false' do
+      expect(chef_run).to_not create_hostsfile_entry('set hostname')
+    end
   end
 
-  it 'does not append hostname hostfile entry when append_hostsfile_ip is false' do
-    chef_run.node.set['set_fqdn'] = 'test.example.com'
-    chef_run.node.set['hostname_cookbook']['append_hostsfile_ip'] = false
-    chef_run.converge 'hostname'
+  context 'wtih set_fqdn as full FQDN and manage_hostfile is true' do
+    let(:chef_run) do
+      ChefSpec::SoloRunner.new(platform: 'ubuntu', version: '14.04') do |node|
+        node.normal['set_fqdn'] = 'test.example.com'
+        node.normal['hostname_cookbook']['manage_hostfile'] = true
+      end.converge described_recipe
+    end
 
-    expect(chef_run).to_not create_hostsfile_entry('set hostname')
+    it 'appends localhost hostfile entry when manage_hostfile is true' do
+      expect(chef_run).to append_hostsfile_entry('localhost')
+    end
+
+    it 'creates hostname hostfile entry when manage_hostfile is true' do
+      expect(chef_run).to create_hostsfile_entry('set hostname')
+    end
   end
 
-  it 'appends localhost hostfile entry when manage_hostfile is true' do
-    chef_run.node.set['set_fqdn'] = 'test.example.com'
-    chef_run.node.set['hostname_cookbook']['manage_hostfile'] = true
-    chef_run.converge 'hostname'
+  context 'wtih set_fqdn as full FQDN and manage_hostfile is true' do
+    let(:chef_run) do
+      ChefSpec::SoloRunner.new(platform: 'ubuntu', version: '14.04') do |node|
+        node.normal['set_fqdn'] = 'test.example.com'
+        node.normal['hostname_cookbook']['manage_hostfile'] = false
+      end.converge described_recipe
+    end
 
-    expect(chef_run).to append_hostsfile_entry('localhost')
+    it 'does not append localhost hostfile entry when manage_hostfile is false' do
+      expect(chef_run).to_not append_hostsfile_entry('localhost')
+    end
+
+    it 'does not create hostname hostfile entry when manage_hostfile is false' do
+      expect(chef_run).to_not create_hostsfile_entry('set hostname')
+    end
   end
 
-  it 'does not append localhost hostfile entry when manage_hostfile is false' do
-    chef_run.node.set['set_fqdn'] = 'test.example.com'
-    chef_run.node.set['hostname_cookbook']['manage_hostfile'] = false
-    chef_run.converge 'hostname'
-
-    expect(chef_run).to_not append_hostsfile_entry('localhost')
-  end
-
-  it 'creates hostname hostfile entry when manage_hostfile is true' do
-    chef_run.node.set['set_fqdn'] = 'test.example.com'
-    chef_run.node.set['hostname_cookbook']['manage_hostfile'] = true
-    chef_run.converge 'hostname'
-
-    expect(chef_run).to create_hostsfile_entry('set hostname')
-  end
-
-  it 'does not create hostname hostfile entry when manage_hostfile is false' do
-    chef_run.node.set['set_fqdn'] = 'test.example.com'
-    chef_run.node.set['hostname_cookbook']['manage_hostfile'] = false
-    chef_run.converge 'hostname'
-
-    expect(chef_run).to_not create_hostsfile_entry('set hostname')
-  end
 end
